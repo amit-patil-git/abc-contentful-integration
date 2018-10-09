@@ -1,12 +1,13 @@
 # ABC Contentful Integration
 
 ## Install
-
+```
 node v8.6+
 run npm install
 java
 clone git repo
 maven clean package -U
+```
 
 ## Installing the Serverless Framework
 Next, install the Serverless Framework via npm which was already installed when you installed Node.js.
