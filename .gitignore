@@ -9,4 +9,5 @@ target
 .classpath
 .settings
 .checkstyle
-rebel.xml
+irebel.xml
+dependency-reduced-pom.xml

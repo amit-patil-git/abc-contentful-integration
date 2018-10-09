@@ -1,5 +1,7 @@
 {
     "cma_access_token":"",
     "space_id":"",
-    "environment_id":"master"
+    "environment_id":"master",
+	"default_language":"en",
+	"source_s3_bucket":""
 }

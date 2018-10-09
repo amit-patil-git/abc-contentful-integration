@@ -4,8 +4,9 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
+import java.util.Map;
 
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
@@ -19,7 +20,6 @@ import com.amazonaws.services.s3.transfer.Download;
 import com.amazonaws.services.s3.transfer.TransferManager;
 import com.amazonaws.services.s3.transfer.TransferManagerBuilder;
 import com.amazonaws.util.CollectionUtils;
-import com.contentful.java.cda.CDAClient;
 import com.contentful.java.cma.CMAClient;
 import com.contentful.java.cma.model.CMAContentType;
 import com.contentful.java.cma.model.CMAEntry;
@@ -36,6 +36,7 @@ public class CmsLambdaHandler implements RequestHandler<S3Event, String> {
 
     private AmazonS3 s3;
 	private TransferManager transferManager;
+	private Map<String, String> ctoolsToContentfulLang = new HashMap<>();;
     
     public CmsLambdaHandler() {
     	s3 = AmazonS3ClientBuilder.standard().build();
@@ -50,10 +51,16 @@ public class CmsLambdaHandler implements RequestHandler<S3Event, String> {
     @Override
     public String handleRequest(S3Event event, Context context) {
         context.getLogger().log("Received event: " + event);
+        
+        ctoolsToContentfulLang.put("en", "en");
+        ctoolsToContentfulLang.put("fr", "fr");
+        ctoolsToContentfulLang.put("nl-nl", "nl-NL");
+        
         ObjectMapper mapper = new ObjectMapper();
-        String cmaAccessToken = System.getenv("cma_access_token");
-		String spaceId = System.getenv("space_id");
-		String environmentId = System.getenv("environment_id");
+        String cmaAccessToken = System.getenv("CMA_ACCESS_TOKEN");
+		String spaceId = System.getenv("SPACE_ID");
+		String environmentId = System.getenv("ENVIRONMENT_ID");
+		String defaultLanguage = System.getenv("DEFAULT_LANGUAGE");
 		
         // Get the object from the event and show its content type
         S3EventNotificationRecord s3EventNotificationRecord = event.getRecords().get(0);
@@ -115,27 +122,27 @@ public class CmsLambdaHandler implements RequestHandler<S3Event, String> {
     			case "productName":
     				if (productResponse.getName() != null) {
     					for(String locale : productResponse.getName().getLocales()) {
-    						productEntry.setField(cmaField.getId(), locale, productResponse.getName().get(locale));
+    						productEntry.setField(cmaField.getId(), ctoolsToContentfulLang.get(locale), productResponse.getName().get(locale));
     					}
     				}
     				break;
     			case "key":
-    				productEntry.setField(cmaField.getId(), Locale.ENGLISH.toString(), productResponse.getKey());
+    				productEntry.setField(cmaField.getId(), defaultLanguage, productResponse.getKey());
     				break;
     			case "slug":
     				if (productResponse.getSlug() != null) {
     					for(String locale : productResponse.getSlug().getLocales()) {
-    						productEntry.setField(cmaField.getId(), locale, productResponse.getSlug().get(locale));
+    						productEntry.setField(cmaField.getId(), ctoolsToContentfulLang.get(locale), productResponse.getSlug().get(locale));
     					}
     				}
     				break;
     			case "variants":
-    				productEntry.setField(cmaField.getId(), Locale.ENGLISH.toString(), productResponse.getAllVariants());
+    				productEntry.setField(cmaField.getId(), defaultLanguage, productResponse.getAllVariants());
     				break;
     			case "shippingMethods":
     				List<String> shippingMethods = new ArrayList<>();
     				productResponse.getShippingMethods().forEach(shippingM -> shippingMethods.add(shippingM.getName()));
-    				productEntry.setField(cmaField.getId(), Locale.ENGLISH.toString(), shippingMethods.toArray());
+    				productEntry.setField(cmaField.getId(), defaultLanguage, shippingMethods.toArray());
     				break;
 
     			default:
@@ -158,7 +165,7 @@ public class CmsLambdaHandler implements RequestHandler<S3Event, String> {
     					if (!CollectionUtils.isNullOrEmpty(inValue.getValue())) {
     						for (LocalizedEnumValue localizedEnumValue : inValue.getValue()) {
     							CMAEntry attributeValueEntry = new CMAEntry();
-    							String attrValId = attribute.getName()+ "-" +localizedEnumValue.getLabel().get(Locale.ENGLISH.toString()).replaceAll("[^a-zA-Z0-9]", "");
+    							String attrValId = attribute.getName()+ "-" +localizedEnumValue.getLabel().get(defaultLanguage).replaceAll("[^a-zA-Z0-9]", "");
     							CMAEntry fetchOne = null;
     							try {
     								fetchOne = client.entries().fetchOne(attrValId);
@@ -170,9 +177,9 @@ public class CmsLambdaHandler implements RequestHandler<S3Event, String> {
     						
     							attributeValueEntry.setId(attrValId);
     							for(String locale : localizedEnumValue.getLabel().getLocales()) {
-    								attributeValueEntry.setField("pimAttributeValue", locale, localizedEnumValue.getLabel().get(locale));
+    								attributeValueEntry.setField("pimAttributeValue", ctoolsToContentfulLang.get(locale), localizedEnumValue.getLabel().get(locale));
     							}
-    							attributeValueEntry.setField("hidden", Locale.ENGLISH.toString(), false);
+    							attributeValueEntry.setField("hidden", defaultLanguage, false);
     							final CMAEntry createdAttrValEntry = client.entries().create(attributeValueContentType.getId(), attributeValueEntry);
     							client.entries().publish(createdAttrValEntry);
     							valuesEntries.add(createdAttrValEntry);
@@ -189,10 +196,10 @@ public class CmsLambdaHandler implements RequestHandler<S3Event, String> {
     			if (null == fetchOne) {
     				attributeEntry.setId(attribute.getName());
     				for (String locale : attribute.getLabel().getLocales()) {
-    					attributeEntry.setField("pimAttributeName", locale, attribute.getLabel().get(locale));
+    					attributeEntry.setField("pimAttributeName", ctoolsToContentfulLang.get(locale), attribute.getLabel().get(locale));
     				}
-    				attributeEntry.setField("hidden", Locale.ENGLISH.toString(), false);
-    				attributeEntry.setField("attributeValue", Locale.ENGLISH.toString(), valuesEntries);
+    				attributeEntry.setField("hidden", defaultLanguage, false);
+    				attributeEntry.setField("attributeValue", defaultLanguage, valuesEntries);
     				final CMAEntry createdAttrEntry = client.entries().create(attributeContentType.getId(), attributeEntry);
     				client.entries().publish(createdAttrEntry);
     			}
