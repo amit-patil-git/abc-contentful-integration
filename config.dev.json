@@ -1,7 +1,7 @@
 {
-    "cma_access_token":"",
-    "space_id":"",
-    "environment_id":"master",
-	"default_language":"en",
-	"source_s3_bucket":""
+  "cma_access_token":"",
+  "space_id":"",
+  "environment_id":"master",
+  "default_language":"en",
+  "source_s3_bucket":"sync-contentful-platform-demo-dev"
 }
