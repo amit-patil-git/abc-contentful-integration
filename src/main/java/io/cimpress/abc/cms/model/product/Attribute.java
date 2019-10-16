@@ -7,19 +7,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonIgnoreProperties(ignoreUnknown = true)
-@JsonPropertyOrder({
-    "name",
-    "value",
-    "label",
-    "required",
-    "class",
-    "selectable",
-    "variable",
-    "type"
-})
+@JsonPropertyOrder({ "derived", "name", "value", "label", "required", "class", "selectable", "variable", "type" })
 public class Attribute {
-	
+	@JsonProperty("derived")
+	private Boolean derived = true;
+
 	@JsonProperty("name")
 	private String name;
 	
@@ -112,4 +104,15 @@ public class Attribute {
 		this.type = type;
 	}
 
+	public Boolean isSyncToContentful() {
+		return !this.getDerived();
+	}
+
+	public void setDerived(Boolean derived) {
+		this.derived = derived;
+	}
+
+	public Boolean getDerived() {
+		return this.derived;
+	}
 }

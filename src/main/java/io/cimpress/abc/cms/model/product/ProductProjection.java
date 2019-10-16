@@ -6,13 +6,13 @@ import java.util.Set;
 
 import javax.annotation.Nullable;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonPropertyOrder({ "id", "version", "productType", "name", "description", "metaTitle", "metaDescription", "metaKeywords",
-	"categories", "slug", "masterVariant", "variants", "shippingMethods", "key", "isRuleBased", "createdAt", "lastModifiedAt" })
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class ProductProjection {
 
 	@JsonProperty("id")
@@ -146,6 +146,10 @@ public class ProductProjection {
 	}
 
 	public ProductVariant getMasterVariant() {
+		if (masterVariant == null) {
+			throw new IllegalStateException("Master variant for product not found.");
+		}
+
 		return masterVariant;
 	}
 

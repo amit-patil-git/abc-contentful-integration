@@ -28,8 +28,6 @@ public final class AttributeValueInRange implements AttributeValue {
 		this.type = type;
 	}
 
-
-
 	public Set<Range> getRange() {
 		return range;
 	}
@@ -45,7 +43,7 @@ public final class AttributeValueInRange implements AttributeValue {
 		private float increment;
 		private String description;
 		private String unitOfMeasure;
-		
+
 		public float getMinimum() {
 			return minimum;
 		}
@@ -73,18 +71,17 @@ public final class AttributeValueInRange implements AttributeValue {
 		public String getDescription() {
 			return description;
 		}
-
+		
 		public void setDescription(String description) {
 			this.description = description;
 		}
 
 		public String getUnitOfMeasure() {
-			return unitOfMeasure;
+			return this.unitOfMeasure;
 		}
 
 		public void setUnitOfMeasure(String unitOfMeasure) {
 			this.unitOfMeasure = unitOfMeasure;
 		}
-		
 	}
 }
